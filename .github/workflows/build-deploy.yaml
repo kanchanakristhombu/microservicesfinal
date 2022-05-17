@@ -3,11 +3,8 @@ name: Docker Build Deploy
 on:
   push:
     branches: [ main ]
-
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -17,14 +14,39 @@ jobs:
     - name: Login to Docker Hub
       uses: docker/login-action@v1
       with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_TOKEN }}
-    # - name: Build the Docker image
-    #   run: docker build . --file dockerfile --tag my-image-name:${{ github.sha }}
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_TOKEN }}
     - name: Build and push
       uses: docker/build-push-action@v2
       with:
         context: .
-        file: ./dockerfile
+        file: ./Dockerfile
         push: true
         tags: ${{ secrets.DOCKER_USERNAME }}/sliit-microservices-2022:${{ github.sha }}
+
+
+    - name: Azure Kubernetes set context
+      uses: Azure/aks-set-context@v1
+      with:
+        creds: '${{secrets.AZURE_CREDENTIAL}}'
+        resource-group: ctse-project
+        cluster-name: microservices-ctse-cluster
+        
+    - name: Create secret in Kubernetes cluster
+      uses: Azure/k8s-create-secret@v1.1
+      with:
+        container-registry-url: https://index.docker.io/v1/
+        container-registry-username: '${{secrets.DOCKER_USERNAME}}'
+        container-registry-password: '${{secrets.DOCKER_TOKEN}}'
+        secret-type: docker-registry
+        secret-name: docker-image-pull-secret
+
+    - name: Deploy to Kubernetes cluster
+      uses: Azure/k8s-deploy@v1
+      with:
+        manifests: |
+          k8s/deploy.yml
+          k8s/service.yml
+        images: '${{secrets.DOCKER_USERNAME}}/sliit-microservices-2022:${{github.sha}}'
+        imagepullsecrets: docker-image-pull-secret
+        action: deploy

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: sliit-microservices-2022
+spec:
+  selector:
+    app: sliit-microservices-2022
+  type: LoadBalancer
+  ports:
+    - port: 4000
+      targetPort: 4000

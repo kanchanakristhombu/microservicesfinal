@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sliit-microservices-2022
+spec:
+  selector:
+    matchLabels:
+      app: sliit-microservices-2022
+  template:
+    metadata:
+      labels:
+        app: sliit-microservices-2022
+    spec:
+      containers:
+        - name: sliit-microservices-2022
+          image: it18000818/sliit-microservices-2022
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 4000
+     
